@@ -13,7 +13,7 @@ HTML comments do not count as content; headings inside code fences do not count
 as sections. Write `None` for sections that do not apply. Outcome must explain
 the change in plain English; the check validates structure, not writing quality.
 
-The workflow runs on this repository's pull requests and exposes `workflow_call`
+The local `pr-description-check.yml` caller runs on this repository's pull requests; the validator exposes `workflow_call`
 for other repositories. Call it from a workflow with these events and no path or
 branch filters:
 
@@ -45,4 +45,4 @@ open PRs need a new event after rollout.
 Sources: [ruleset workflow events](https://docs.github.com/en/enterprise-cloud@latest/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/troubleshooting-rules#supported-ruleset-workflow-events),
 [required status checks](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets#require-status-checks-to-pass-before-merging).
 
-Local checks: `bun test` and `actionlint .github/workflows/pr-description.yml`.
+Local checks: `bun test` and `actionlint .github/workflows/*.yml`.

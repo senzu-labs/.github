@@ -42,6 +42,6 @@ test("drafts defer, ready PRs validate, and missing PR context fails closed", as
   expect(await validate(null, true)).toEqual([]);
   expect(await validate(null, false)).toHaveLength(1);
   expect(await validate(valid, false, null)).toHaveLength(1);
-  expect(workflow.on.pull_request.types).toEqual(["opened", "edited", "synchronize", "reopened", "ready_for_review"]);
+  expect(Bun.YAML.parse(await Bun.file(".github/workflows/pr-description-check.yml").text()).on.pull_request.types).toEqual(["opened", "edited", "synchronize", "reopened", "ready_for_review"]);
   expect(workflow.jobs.validate.if).toBe("github.event.pull_request.draft == false");
 });
