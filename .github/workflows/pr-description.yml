@@ -1,0 +1,61 @@
+name: PR description
+
+on:
+  workflow_call:
+
+permissions:
+  pull-requests: read
+
+jobs:
+  validate:
+    name: PR description
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const number = context.payload.pull_request?.number;
+            if (!number) {
+              core.setFailed('A pull_request event is required.');
+              return;
+            }
+            const { data: pr } = await github.rest.pulls.get({
+              ...context.repo, pull_number: number,
+            });
+            if (pr.draft) {
+              core.info('Draft PR: validation deferred until ready_for_review.');
+              return;
+            }
+            const required = ['Outcome', 'Why', 'Boundaries', 'Risk', 'Evidence', 'Decisions'];
+            const sections = new Map();
+            let section;
+            let fence;
+            const body = (pr.body ?? '').replace(/<!--[\s\S]*?(?:-->|$)/g, '');
+            for (const line of body.split(/\r?\n/)) {
+              const marker = line.match(/^ {0,3}(`{3,}|~{3,})/);
+              if (marker) {
+                if (!fence) fence = marker[1];
+                else if (marker[1][0] === fence[0] && marker[1].length >= fence.length && /^ {0,3}(`+|~+)\s*$/.test(line)) fence = undefined;
+                if (section) sections.get(section).push(line);
+                continue;
+              }
+              const heading = !fence && line.match(/^ {0,3}##\s+(.+?)\s*#*\s*$/);
+              if (heading) {
+                section = heading[1];
+                if (sections.has(section)) {
+                  core.setFailed(`Duplicate section: ## ${section}`);
+                  return;
+                }
+                sections.set(section, []);
+              } else if (section) sections.get(section).push(line);
+            }
+            const invalid = required.filter(name =>
+              !sections.has(name) || !sections.get(name).join('\n').replace(/[\s`~*_>#\-]/g, '')
+            );
+            if (invalid.length) {
+              core.setFailed(`Missing or empty sections: ${invalid.map(name => `## ${name}`).join(', ')}. Fill all six sections from senzu-labs/.github:pull_request_template.md; use None where appropriate.`);
+            } else {
+              core.info('All six PR description sections contain content.');
+            }
