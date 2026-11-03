@@ -46,3 +46,15 @@ Sources: [ruleset workflow events](https://docs.github.com/en/enterprise-cloud@l
 [required status checks](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets#require-status-checks-to-pass-before-merging).
 
 Local checks: `bun test` and `actionlint .github/workflows/*.yml`.
+
+## CI runners
+
+All Linux jobs use `CI_LINUX_RUNNER`. Unset or empty, it falls back to
+`ubuntu-latest`, preserving current runner placement. Set it to
+`blacksmith-2vcpu-ubuntu-2404` to enable Blacksmith after repository access is
+confirmed; set it to `ubuntu-latest` for the outage fallback. This source change
+does not set the variable or enable Blacksmith.
+
+The reusable `pr-description.yml` reads the caller repository's variable. Its
+local caller owns no runner and needs no `runs-on` or new input. Other repositories
+keep their existing pinned references until the shared workflow change merges.
